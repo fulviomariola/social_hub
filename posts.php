@@ -17,6 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         $success_message = "Contenuto aggiunto con successo alla coda di pubblicazione!";
     }
+    
 }
 
 // Recuperiamo i social attivi per mostrarli come opzioni nel form
