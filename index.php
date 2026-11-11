@@ -4,6 +4,25 @@ require_once 'db.php';
 // Recuperiamo l'elenco dei social account dal database
 $stmt = $pdo->query("SELECT * FROM social_accounts");
 $accounts = $stmt->fetchAll();
+
+// Recuperiamo i dati aggregati per data per il grafico (ultimi 7 record/giorni)
+$chart_stmt = $pdo->query("
+    SELECT recorded_date, SUM(views) as total_views 
+    FROM analytics_logs 
+    GROUP BY recorded_date 
+    ORDER BY recorded_date ASC 
+    LIMIT 7
+");
+$chart_data = $chart_stmt->fetchAll();
+
+// Prepariamo gli array PHP da convertire in JSON per JavaScript
+$labels = [];
+$views_data = [];
+
+foreach ($chart_data as $row) {
+    $labels[] = date('d/m', strtotime($row['recorded_date']));
+    $views_data[] = $row['total_views'];
+}
 ?>
 
 <!DOCTYPE html>
@@ -28,7 +47,7 @@ $accounts = $stmt->fetchAll();
     <!-- Page Wrapper -->
     <div id="wrapper">
 
-   <!-- Sidebar -->
+        <!-- Sidebar -->
         <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
 
             <!-- Sidebar - Brand -->
@@ -54,6 +73,20 @@ $accounts = $stmt->fetchAll();
                 <a class="nav-link" href="manage.php">
                     <i class="fas fa-fw fa-tools"></i>
                     <span>Gestione Canali</span></a>
+            </li>
+
+            <!-- Nav Item - Gestione Post & Link -->
+            <li class="nav-item">
+                <a class="nav-link" href="posts.php">
+                    <i class="fas fa-fw fa-share-alt"></i>
+                    <span>Gestione Post & Link</span></a>
+            </li>
+
+            <!-- Nav Item - Analytics -->
+            <li class="nav-item">
+                <a class="nav-link" href="analytics.php">
+                    <i class="fas fa-fw fa-chart-area"></i>
+                    <span>Analytics & Metriche</span></a>
             </li>
 
             <!-- Divider -->
@@ -99,7 +132,7 @@ $accounts = $stmt->fetchAll();
                         <h1 class="h3 mb-0 text-gray-800">Panoramica Canali</h1>
                     </div>
 
-                    <!-- Content Row -->
+                    <!-- Content Row - Cards -->
                     <div class="row">
                         <?php foreach ($accounts as $acc): ?>
                             <div class="col-xl-3 col-md-6 mb-4">
@@ -126,6 +159,22 @@ $accounts = $stmt->fetchAll();
                         <?php endforeach; ?>
                     </div>
 
+                    <!-- Content Row - Grafico -->
+                    <div class="row">
+                        <div class="col-xl-12 col-lg-12">
+                            <div class="card shadow mb-4">
+                                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                    <h6 class="m-0 font-weight-bold text-primary">Andamento Visualizzazioni Totali</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart-area">
+                                        <canvas id="viewsChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
                 <!-- /.container-fluid -->
 
@@ -141,12 +190,49 @@ $accounts = $stmt->fetchAll();
     <!-- Bootstrap core JavaScript-->
     <script src="vendor/jquery/jquery.min.js"></script>
     <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-
-    <!-- Core plugin JavaScript-->
     <script src="vendor/jquery-easing/jquery.easing.min.js"></script>
-
-    <!-- Custom scripts for all pages-->
     <script src="js/sb-admin-2.min.js"></script>
+
+    <!-- Page level plugins (Chart.js incluso nel template) -->
+    <script src="vendor/chart.js/Chart.min.js"></script>
+
+    <!-- Inizializzazione Grafico Dinamico -->
+    <script>
+    var ctx = document.getElementById("viewsChart");
+    var viewsChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: <?php echo json_encode($labels); ?>,
+        datasets: [{
+          label: "Visualizzazioni",
+          lineTension: 0.3,
+          backgroundColor: "rgba(78, 115, 223, 0.05)",
+          borderColor: "rgba(78, 115, 223, 1)",
+          pointRadius: 3,
+          pointBackgroundColor: "rgba(78, 115, 223, 1)",
+          pointBorderColor: "rgba(78, 115, 223, 1)",
+          pointHoverRadius: 3,
+          pointHoverBackgroundColor: "rgba(78, 115, 223, 1)",
+          pointHoverBorderColor: "rgba(78, 115, 223, 1)",
+          pointHitRadius: 10,
+          pointBorderWidth: 2,
+          data: <?php echo json_encode($views_data); ?>,
+        }],
+      },
+      options: {
+        maintainAspectRatio: false,
+        scales: {
+          xAxes: [{
+            gridLines: { display: false }
+          }],
+          yAxes: [{
+            ticks: { beginAtZero: true }
+          }],
+        },
+        legend: { display: false }
+      }
+    });
+    </script>
 
 </body>
 

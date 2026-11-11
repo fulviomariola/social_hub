@@ -62,6 +62,19 @@ $accounts = $stmt->fetchAll();
                     <i class="fas fa-fw fa-tools"></i>
                     <span>Gestione Canali</span></a>
             </li>
+
+            <!-- Nav Item - Gestione Post & Link (NUOVO) -->
+            <li class="nav-item">
+                <a class="nav-link" href="posts.php">
+                    <i class="fas fa-fw fa-share-alt"></i>
+                    <span>Gestione Post & Link</span></a>
+            </li>
+
+            <li class="nav-item">
+                <a class="nav-link" href="analytics.php">
+                    <i class="fas fa-fw fa-chart-area"></i>
+                    <span>Analytics & Metriche</span></a>
+            </li>
         </ul>
         <!-- End of Sidebar -->
 
