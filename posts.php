@@ -7,25 +7,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $title = trim($_POST['title']);
     $source_url = trim($_POST['source_url']);
     $platforms = isset($_POST['platforms']) ? $_POST['platforms'] : [];
-    
+
     if (!empty($title) && !empty($platforms)) {
         // Convertiamo l'array delle piattaforme selezionate in una stringa separata da virgole
         $platforms_str = implode(',', $platforms);
-        
+
         $stmt = $pdo->prepare("INSERT INTO posts_log (title, source_url, platforms_targeted, status) VALUES (?, ?, ?, 'pending')");
         $stmt->execute([$title, $source_url, $platforms_str]);
-        
+
         $success_message = "Contenuto aggiunto con successo alla coda di pubblicazione!";
     }
-    
+
 }
 
 // Recuperiamo i social attivi per mostrarli come opzioni nel form
 $stmt = $pdo->query("SELECT * FROM social_accounts WHERE is_active = 1 ORDER BY platform_slug ASC");
 $active_accounts = $stmt->fetchAll();
 
+// Creiamo una mappa ID => "Nome Account (piattaforma)" per rendere leggibile lo storico
+$all_acc_stmt = $pdo->query("SELECT id, account_name, platform_slug FROM social_accounts");
+$accounts_map = [];
+foreach ($all_acc_stmt->fetchAll() as $a) {
+    $accounts_map[$a['id']] = $a['account_name'] . ' (' . ucfirst($a['platform_slug']) . ')';
+}
+
 // Recuperiamo lo storico dei post inseriti
-posts_query:
 $posts_stmt = $pdo->query("SELECT * FROM posts_log ORDER BY created_at DESC");
 $posts = $posts_stmt->fetchAll();
 ?>
@@ -41,7 +47,9 @@ $posts = $posts_stmt->fetchAll();
 
     <!-- Custom fonts for this template-->
     <link href="vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
-    <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i"
+        rel="stylesheet">
 
     <!-- Custom styles for this template-->
     <link href="css/sb-admin-2.min.css" rel="stylesheet">
@@ -124,11 +132,13 @@ $posts = $posts_stmt->fetchAll();
                             <form method="POST">
                                 <div class="form-group">
                                     <label for="title">Titolo del Contenuto / Descrizione</label>
-                                    <input type="text" class="form-control" id="title" name="title" required placeholder="Es. Uscito ora il nuovo video tutorial!">
+                                    <input type="text" class="form-control" id="title" name="title" required
+                                        placeholder="Es. Uscito ora il nuovo video tutorial!">
                                 </div>
                                 <div class="form-group">
                                     <label for="source_url">Link Sorgente (es. YouTube URL)</label>
-                                    <input type="url" class="form-control" id="source_url" name="source_url" placeholder="https://www.youtube.com/watch?v=...">
+                                    <input type="url" class="form-control" id="source_url" name="source_url"
+                                        placeholder="https://www.youtube.com/watch?v=...">
                                 </div>
                                 <div class="form-group">
                                     <label>Seleziona i canali di destinazione:</label>
@@ -136,8 +146,11 @@ $posts = $posts_stmt->fetchAll();
                                         <?php foreach ($active_accounts as $acc): ?>
                                             <div class="col-md-3 mb-2">
                                                 <div class="custom-control custom-checkbox">
-                                                    <input type="checkbox" class="custom-control-input" id="platform_<?php echo $acc['id']; ?>" name="platforms[]" value="<?php echo $acc['platform_slug']; ?>">
-                                                    <label class="custom-control-label text-capitalize" for="platform_<?php echo $acc['id']; ?>">
+                                                    <input type="checkbox" class="custom-control-input"
+                                                        id="platform_<?php echo $acc['id']; ?>" name="platforms[]"
+                                                        value="<?php echo $acc['id']; ?>">
+                                                    <label class="custom-control-label text-capitalize"
+                                                        for="platform_<?php echo $acc['id']; ?>">
                                                         <?php echo htmlspecialchars($acc['account_name']); ?>
                                                     </label>
                                                 </div>
@@ -176,14 +189,27 @@ $posts = $posts_stmt->fetchAll();
                                                 <td><?php echo htmlspecialchars($post['title']); ?></td>
                                                 <td>
                                                     <?php if (!empty($post['source_url'])): ?>
-                                                        <a href="<?php echo htmlspecialchars($post['source_url']); ?>" target="_blank">Apri Link</a>
+                                                        <a href="<?php echo htmlspecialchars($post['source_url']); ?>"
+                                                            target="_blank">Apri Link</a>
                                                     <?php else: ?>
                                                         Nessuno
                                                     <?php endif; ?>
                                                 </td>
-                                                <td><span class="badge badge-info"><?php echo htmlspecialchars($post['platforms_targeted']); ?></span></td>
+
                                                 <td>
-                                                    <span class="badge badge-warning"><?php echo htmlspecialchars($post['status']); ?></span>
+                                                    <?php
+                                                    $target_ids = explode(',', $post['platforms_targeted']);
+                                                    foreach ($target_ids as $tid) {
+                                                        $tid = trim($tid);
+                                                        $label = $accounts_map[$tid] ?? "Account #$tid";
+                                                        echo '<span class="badge badge-info mr-1">' . htmlspecialchars($label) . '</span>';
+                                                    }
+                                                    ?>
+                                                </td>
+
+                                                <td>
+                                                    <span
+                                                        class="badge badge-warning"><?php echo htmlspecialchars($post['status']); ?></span>
                                                 </td>
                                             </tr>
                                         <?php endforeach; ?>
