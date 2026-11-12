@@ -2,6 +2,11 @@
 require_once __DIR__ . '/../db.php';
 require_once __DIR__ . '/YouTubeService.php';
 require_once __DIR__ . '/TelegramService.php';
+require_once __DIR__ . '/InstagramService.php';
+require_once __DIR__ . '/TikTokService.php';
+require_once __DIR__ . '/FacebookService.php';
+require_once __DIR__ . '/XService.php';
+require_once __DIR__ . '/WhatsAppService.php';
 
 echo "=== AVVIO CRON SYNC ===\n";
 
@@ -26,6 +31,26 @@ foreach ($accounts as $acc) {
         $service = new TelegramService($pdo, $accountId);
         $service->syncAnalytics();
         echo "--> Metriche Telegram aggiornate (Account ID: $accountId)\n";
+    } elseif ($platform === 'instagram') {
+        $service = new InstagramService($pdo, $accountId);
+        $service->syncAnalytics();
+        echo "--> Metriche Instagram aggiornate (Account ID: $accountId)\n";
+    }  elseif ($platform === 'tiktok') {
+        $service = new TikTokService($pdo, $accountId);
+        $service->syncAnalytics();
+        echo "--> Metriche TikTok aggiornate (Account ID: $accountId)\n";
+    }  elseif ($platform === 'facebook') {
+        $service = new FacebookService($pdo, $accountId);
+        $service->syncAnalytics();
+        echo "--> Metriche Facebook aggiornate (Account ID: $accountId)\n";
+    }  elseif ($platform === 'x') {
+        $service = new XService($pdo, $accountId);
+        $service->syncAnalytics();
+        echo "--> Metriche X aggiornate (Account ID: $accountId)\n";
+    }  elseif ($platform === 'whatsapp') {
+        $service = new WhatsAppService($pdo, $accountId);
+        $service->syncAnalytics();
+        echo "--> Metriche WhatsApp aggiornate (Account ID: $accountId)\n";
     }
 }
 
@@ -66,6 +91,26 @@ if (count($pendingPosts) > 0) {
                     $tgService = new TelegramService($pdo, $targetAccount['id']);
                     $tgService->publishPost($title, $sourceUrl);
                     echo "--> Pubblicato su Telegram (Account: {$targetAccount['account_name']})\n";
+                } elseif ($platform === 'instagram') {
+                    $igService = new InstagramService($pdo, $targetAccount['id']);
+                    $igService->publishPost($title, $sourceUrl);
+                    echo "--> Pubblicato su Instagram (Account: {$targetAccount['account_name']})\n";
+                } elseif ($platform === 'tiktok') {
+                    $tkService = new TikTokService($pdo, $targetAccount['id']);
+                    $tkService->publishPost($title, $sourceUrl);
+                    echo "--> Pubblicato su TikTok (Account: {$targetAccount['account_name']})\n";
+                } elseif ($platform === 'facebook') {
+                    $fbService = new FacebookService($pdo, $targetAccount['id']);
+                    $fbService->publishPost($title, $sourceUrl);
+                    echo "--> Pubblicato su Facebook (Account: {$targetAccount['account_name']})\n";
+                } elseif ($platform === 'x') {
+                    $xService = new XService($pdo, $targetAccount['id']);
+                    $xService->publishPost($title, $sourceUrl);
+                    echo "--> Pubblicato su X (Account: {$targetAccount['account_name']})\n";
+                } elseif ($platform === 'whatsapp') {
+                    $waService = new WhatsAppService($pdo, $targetAccount['id']);
+                    $waService->publishPost($title, $sourceUrl);
+                    echo "--> Pubblicato su WhatsApp (Account: {$targetAccount['account_name']})\n";
                 }
             }
         }
